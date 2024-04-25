@@ -1,0 +1,36 @@
+% 设置输入和输出文件路径
+inputFilePath = '/Volumes/TU280Pro/average/Lattice_protein_29ms_561_001_MMStack_Default.ome.tif'; % 输入tif文件路径
+outputFilePath = '/Volumes/TU280Pro/average/output.tif'; % 输出tif文件路径
+
+% 读取输入tif stack
+tifStackInfo = imfinfo(inputFilePath);
+numFrames = numel(tifStackInfo);
+numGroups = numFrames / 7;
+
+% 初始化输出tif stack
+outputStack = zeros(tifStackInfo(1).Width, tifStackInfo(1).Height, 7, 'uint16');
+
+% 循环处理每个组
+for group = 1:numGroups
+    % 读取当前组的所有帧
+    frames = zeros(tifStackInfo(1).Width, tifStackInfo(1).Height, 7, 'uint16');
+    for i = 1:7
+        frameIndex = (group - 1) * 7 + i;
+        frames(:, :, i) = imread(inputFilePath, frameIndex);
+    end
+    
+    % 计算平均值并叠加
+    avgFrame = mean(frames, 3);
+    
+    % 将平均帧添加到输出stack
+    outputStack(:, :, group) = avgFrame;
+end
+
+% 保存输出tif stack
+for group = 1:7
+    if group == 1
+        imwrite(outputStack(:, :, group), outputFilePath, 'tif', 'Compression', 'none');
+    else
+        imwrite(outputStack(:, :, group), outputFilePath, 'tif', 'WriteMode', 'append', 'Compression', 'none');
+    end
+end
